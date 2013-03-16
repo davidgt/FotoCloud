@@ -84,6 +84,7 @@ public class SelectionFragment extends SherlockFragment {
 	                    profilePictureView.setProfileId(user.getId());
 	                    // Set the Textview's text to the user's name.
 	                    userNameView.setText(user.getName());
+	                    
 	                }
 	            }
 	            if (response.getError() != null) {

@@ -1,11 +1,18 @@
 package com.app.fotocloud.facebook;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -16,9 +23,10 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphObject;
 import com.facebook.model.GraphUser;
 
-public class PhotoGridViewerFragment extends SherlockFragment {
+public class PhotoGridViewerFragment extends SherlockFragment implements OnClickListener {
 	
 	private static final String TAG = "PHOTO_GRID_VIEWER";
 	
@@ -27,11 +35,13 @@ public class PhotoGridViewerFragment extends SherlockFragment {
 	private UiLifecycleHelper uiHelper;
 	private Session.StatusCallback callback;
 	
+	private String userId;
+	
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		getActivity().setContentView(R.layout.fb_photo_grid_viewer);
+		getActivity().setContentView(R.layout.fb_photo_grid_viewer);		
 		
 		uiHelper = new UiLifecycleHelper(getActivity(), callback);
 	    uiHelper.onCreate(savedInstanceState);
@@ -42,7 +52,14 @@ public class PhotoGridViewerFragment extends SherlockFragment {
 		        onSessionStateChange(session, state, exception);
 		    }
 		};
-		getPhotos();
+		
+		Session session = Session.getActiveSession();
+	    if (session != null && session.isOpened()) {
+	        // Get the user's data
+	        makeMeRequest(session);
+	    }
+		
+		
 	}
 
 	
@@ -56,7 +73,55 @@ public class PhotoGridViewerFragment extends SherlockFragment {
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 	    View view = inflater.inflate(R.layout.fb_photo_grid_viewer, container, false);
+	    ((Button)view.findViewById(R.id.button1)).setOnClickListener(this);
+	    ((Button)view.findViewById(R.id.button2)).setOnClickListener(this);
+	    imageView = (ImageView) getActivity().findViewById(R.id.imageView1);
 	    return view;
+	}
+	
+	public void onClick(View v) {
+		final int viewId = v.getId();
+		if(viewId==R.id.button1){
+			Toast.makeText(getSherlockActivity().getApplicationContext(), "PAÑUM", Toast.LENGTH_LONG).show();
+			if(Session.getActiveSession().isOpened()){
+			URL img_value = null;
+				try {
+					//img_value = new URL("http://graph.facebook.com/"+userId+"/picture");
+					img_value = new URL("http://photos-c.ak.fbcdn.net/hphotos-ak-frc1/734570_111467615709522_2116195527_s.jpg");
+					
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				Bitmap mIcon1 = null;
+				try {
+					mIcon1 = BitmapFactory.decodeStream(img_value.openConnection().getInputStream());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				imageView.setImageBitmap(mIcon1);
+			}
+		}
+		else if(viewId==R.id.button2){
+			if(Session.getActiveSession().isOpened()){
+				Session session = Session.getActiveSession();
+				Request request = Request.newGraphPathRequest(session, "http://graph.facebook.com/"+userId+"", new Request.Callback() {
+					
+					@Override
+					public void onCompleted(Response response) {
+						GraphObject object = response.getGraphObject();
+				        if(object != null){				        
+				            Toast.makeText(getSherlockActivity().getApplicationContext(), object.getProperty("first_name").toString(), Toast.LENGTH_LONG).show();
+				        }
+				        else{
+				        	Toast.makeText(getSherlockActivity().getApplicationContext(), "SIDA", Toast.LENGTH_LONG).show();
+				        }
+					}
+				});
+				request.executeAndWait();
+			}			
+		}
 	}
 	
 	private void onSessionStateChange(final Session session, SessionState state, Exception exception) {
@@ -80,6 +145,7 @@ public class PhotoGridViewerFragment extends SherlockFragment {
 	                    //profilePictureView.setProfileId(user.getId());
 	                    // Set the Textview's text to the user's name.
 	                    //userNameView.setText(user.getName());
+	                	userId=user.getId();
 	                }
 	            }
 	            if (response.getError() != null) {
@@ -87,20 +153,6 @@ public class PhotoGridViewerFragment extends SherlockFragment {
 	            }
 	        }
 	    });
-	    request.executeAsync();
+	    request.executeAndWait();
 	}
-	private void getPhotos() {
-		Request request = Request.newGraphPathRequest(Session.getActiveSession(), "http://photos-d.ak.fbcdn.net/hphotos-ak-prn1/72643_111434992379451_1772268028_s.jpg", new Request.Callback() {
-			
-			@Override
-			public void onCompleted(Response response) {
-				// TODO Auto-generated method stub
-				Object photo = response.getGraphObject();
-				Toast.makeText(getActivity().getApplicationContext(), photo.toString(), Toast.LENGTH_LONG).show();
-			}
-		});
-		request.executeAndWait();
-		
-	}
-
 }

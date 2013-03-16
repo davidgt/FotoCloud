@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.view.View;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
@@ -29,9 +30,9 @@ import com.facebook.widget.LoginButton;
 public class MainActivity extends SherlockFragmentActivity {
 	
 	private static final int SPLASH = 0;
-	private static final int SELECTION = 1;
-	private static final int SETTINGS = 2;
-	private static final int PHOTOVIEWER = 3;
+	//private static final int SELECTION = 1;
+	private static final int SETTINGS = 1;
+	private static final int PHOTOVIEWER = 2;
 	private static final int FRAGMENT_COUNT = PHOTOVIEWER + 1;
 
 	private static final int REQ_CODE_PICK_IMAGE = 100;
@@ -43,6 +44,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	
 	private UiLifecycleHelper uiHelper;
 	private Session.StatusCallback callback;
+	private FragmentManager fm;
 	
 	private MenuItem settings;
 	private MenuItem clearUser;
@@ -66,11 +68,11 @@ public class MainActivity extends SherlockFragmentActivity {
 		readPermissions.add("photo_upload");
 		loginButton.setReadPermissions(readPermissions);
 		
-		FragmentManager fm = getSupportFragmentManager();
-	    fragments[SPLASH] = fm.findFragmentById(R.id.splashFragment);
-	    fragments[SELECTION] = fm.findFragmentById(R.id.selectionFragment);
-	    fragments[SETTINGS] = fm.findFragmentById(R.id.userSettingsFragment);
-	    fragments[PHOTOVIEWER]= fm.findFragmentById(R.id.photoGridViewerFragment);
+		fm = getSupportFragmentManager();
+	    fragments[SPLASH] = (Fragment) fm.findFragmentById(R.id.splashFragment);
+	    //fragments[SELECTION] = fm.findFragmentById(R.id.selectionFragment);
+	    fragments[SETTINGS] = (Fragment) fm.findFragmentById(R.id.userSettingsFragment);
+	    fragments[PHOTOVIEWER]= (Fragment) fm.findFragmentById(R.id.photoGridViewerFragment);
 
 	    FragmentTransaction transaction = fm.beginTransaction();
 	    for(int i = 0; i < fragments.length; i++) {
@@ -116,7 +118,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	public boolean onPrepareOptionsMenu(com.actionbarsherlock.view.Menu menu) {
 	    // only add the menu when the selection fragment is showing
-	    if (fragments[SELECTION].isVisible()) {
+	    if (fragments[PHOTOVIEWER].isVisible()) {
 	        if (menu.size() == 0) {
 	            settings = menu.add(R.string.settings);
 	            clearUser = menu.add(R.string.clearuser);
@@ -192,7 +194,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	        if (state.isOpened()) {
 	            // If the session state is open:
 	            // Show the authenticated fragment
-	            showFragment(SELECTION, false);
+	            showFragment(PHOTOVIEWER, false);
 	        } else if (state.isClosed()) {
 	            // If the session state is closed:
 	            // Show the login fragment
@@ -209,7 +211,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	    if (session != null && session.isOpened()) {
 	        // if the session is already open,
 	        // try to show the selection fragment
-	        showFragment(SELECTION, false);
+	        showFragment(PHOTOVIEWER, false);
 	    } else {
 	        // otherwise present the splash screen
 	        // and ask the user to login.
@@ -270,6 +272,9 @@ public class MainActivity extends SherlockFragmentActivity {
 	protected void onSaveInstanceState(Bundle outState) {
 	    super.onSaveInstanceState(outState);
 	    uiHelper.onSaveInstanceState(outState);
+	}
+	public void onClick_Push_ME(View v){
+		//Toast.makeText(getApplicationContext(),, Toast.LENGTH_LONG).show();
 	}
 
 	
