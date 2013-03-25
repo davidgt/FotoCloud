@@ -111,12 +111,14 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 			if(Session.getActiveSession().isOpened()){
 				//Toast.makeText(getSherlockActivity().getApplicationContext(), "OLA Q ASHE", Toast.LENGTH_LONG).show();
 				Session session = Session.getActiveSession();
-				Request request = Request.newGraphPathRequest(session, "http://graph.facebook.com/"+userId+"/albums", new Request.Callback() {
-				JSONArray jsonArray = null;	
+				Request request = Request.newGraphPathRequest(session, ""+userId+"/albums", new Request.Callback() {
+					JSONObject graphResposte=null;
+					JSONArray jsonArray = null;	
+					//http://graph.facebook.com/
 					@Override
 					public void onCompleted(Response response) {
 						if(response.getGraphObject()!=null){
-							JSONObject graphResposte = response.getGraphObject().getInnerJSONObject();
+							graphResposte = response.getGraphObject().getInnerJSONObject();
 							try {
 								jsonArray = graphResposte.getJSONArray("data");
 							
