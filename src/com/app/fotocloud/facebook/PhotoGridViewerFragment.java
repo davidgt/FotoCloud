@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -23,7 +27,7 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
-import com.facebook.model.GraphObject;
+import com.facebook.android.Util;
 import com.facebook.model.GraphUser;
 
 public class PhotoGridViewerFragment extends SherlockFragment implements OnClickListener {
@@ -105,18 +109,32 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 		}
 		else if(viewId==R.id.button2){
 			if(Session.getActiveSession().isOpened()){
+				//Toast.makeText(getSherlockActivity().getApplicationContext(), "OLA Q ASHE", Toast.LENGTH_LONG).show();
 				Session session = Session.getActiveSession();
-				Request request = Request.newGraphPathRequest(session, "http://graph.facebook.com/"+userId+"", new Request.Callback() {
-					
+				Request request = Request.newGraphPathRequest(session, "http://graph.facebook.com/"+userId+"/albums", new Request.Callback() {
+				JSONArray jsonArray = null;	
 					@Override
 					public void onCompleted(Response response) {
-						GraphObject object = response.getGraphObject();
-				        if(object != null){				        
-				            Toast.makeText(getSherlockActivity().getApplicationContext(), object.getProperty("first_name").toString(), Toast.LENGTH_LONG).show();
-				        }
-				        else{
-				        	Toast.makeText(getSherlockActivity().getApplicationContext(), "SIDA", Toast.LENGTH_LONG).show();
-				        }
+						if(response.getGraphObject()!=null){
+							JSONObject graphResposte = response.getGraphObject().getInnerJSONObject();
+							try {
+								jsonArray = graphResposte.getJSONArray("data");
+							
+								String cover_photo[]=new String[jsonArray.length()];
+								for(int i = 0; i < jsonArray.length(); i++){				                
+										JSONObject c = jsonArray.getJSONObject(i);
+										cover_photo[i]=c.getString("cover_photo");
+					            }
+								Toast.makeText(getSherlockActivity().getApplicationContext(), cover_photo[0], Toast.LENGTH_LONG).show();
+							} catch (JSONException e1) {
+								// TODO Auto-generated catch block
+								Toast.makeText(getSherlockActivity().getApplicationContext(), "JSON_EXCEPTION", Toast.LENGTH_LONG).show();
+								e1.printStackTrace();
+							}
+						}
+						else
+							Toast.makeText(getSherlockActivity().getApplicationContext(), "NULL", Toast.LENGTH_LONG).show();
+						
 					}
 				});
 				request.executeAndWait();
