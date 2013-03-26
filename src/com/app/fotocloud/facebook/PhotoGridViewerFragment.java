@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -18,7 +19,8 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -37,6 +39,18 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	
 	private static final String TAG = "PHOTO_GRID_VIEWER";
 	
+	Integer[] imageIDs = {
+	        R.drawable.img1,
+	        R.drawable.img2,
+	        R.drawable.img3,
+	        R.drawable.img4,
+	        R.drawable.img5,
+	        R.drawable.img6,
+	        R.drawable.img7,
+	        R.drawable.img8,
+	        R.drawable.img9,
+	        R.drawable.img10,
+	};
 	//---------OLD STUFF-----------------------//
 	private ImageView imageView;
 	List<String> albumsUrlList=new ArrayList<String>();
@@ -54,6 +68,9 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getActivity().setContentView(R.layout.fb_photo_grid_viewer);
+		
+		//GridView gridView = (GridView)getActivity().findViewById(R.id.gridview);
+		//gridView.setAdapter(new ImageAdapter(getActivity()));		
 		
 		filled=false;
 		albums=new ArrayList<Album>();
@@ -73,48 +90,32 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	        // Get the user's data
 	        makeMeRequest(session);
 	    }
-	    //--------------------------------------------//
-	  
-		//Toast.makeText(getSherlockActivity().getApplicationContext(), albums.get(0).getTitle(), Toast.LENGTH_LONG).show();
-		Toast.makeText(getSherlockActivity().getApplicationContext(), "OnCreate", Toast.LENGTH_LONG).show();
+	    //--------------------------------------------//	
 	}
 	
 	@Override
 	public void onResume() {
 	    super.onResume();
-	    uiHelper.onResume();
+	    uiHelper.onResume();	    
 	    if(!filled)
-	    	fillAlbums();
-	    else{
-	    	imageView.setImageBitmap(albums.get(0).getCover_photo().getPhoto());
-	    	Toast.makeText(getSherlockActivity().getApplicationContext(), albums.get(0).getTitle(), Toast.LENGTH_LONG).show();
-	    }
-	    
-	    Toast.makeText(getSherlockActivity().getApplicationContext(), "OnResume", Toast.LENGTH_LONG).show();
+	    	fillAlbums();	   
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getActivity().getMenuInflater().inflate(R.menu.activity_photo_grid_viewer_fragment,
-				menu);
-		Toast.makeText(getSherlockActivity().getApplicationContext(), "OnCreateOptionsMenu", Toast.LENGTH_LONG).show();
+				menu);		
 		return true;
 	}
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-	    View view = inflater.inflate(R.layout.fb_photo_grid_viewer, container, false);
-	    ((Button)view.findViewById(R.id.button1)).setOnClickListener(this);
-	    ((Button)view.findViewById(R.id.button2)).setOnClickListener(this);
-	    imageView = (ImageView) getActivity().findViewById(R.id.imageView1);
-	    
-	    Toast.makeText(getSherlockActivity().getApplicationContext(), "OnCreateView", Toast.LENGTH_LONG).show();
-		
+	    View view = inflater.inflate(R.layout.fb_photo_grid_viewer, container, false);	
 	    return view;
 	}
 	
 	public void onClick(View v) {
 		final int viewId = v.getId();
-		if(viewId==R.id.button1){
+		/*if(viewId==R.id.button1){
 			Toast.makeText(getSherlockActivity().getApplicationContext(), "PAÑUM", Toast.LENGTH_LONG).show();
 			if(Session.getActiveSession().isOpened()){
 			URL img_value = null;
@@ -173,7 +174,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 				});
 				request.executeAndWait();
 			}			
-		}
+		}*/
 	}
 	
 	private void onSessionStateChange(final Session session, SessionState state, Exception exception) {
@@ -315,9 +316,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 						e.printStackTrace();
 					}
 					
-				}
-
-				
+				}				
 			});
 			request.executeAndWait();
 			
@@ -343,6 +342,38 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 		}
 		
 		return mIcon1;
+	}
+	public class ImageAdapter extends BaseAdapter{
+		private Context context;
+		public ImageAdapter(Context c){
+			context=c;
+		}
+		public int getCount(){
+			return imageIDs.length;
+		}
+		public Object getItem(int position){
+			return position;
+		}
+		@Override
+		public long getItemId(int position) {
+			// TODO Auto-generated method stub
+			return position;
+		}
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			ImageView imageView;
+			if(convertView==null){
+				imageView = new ImageView(context);
+				imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+				imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+				imageView.setPadding(5,5,5,5);
+			}
+			else{
+				imageView = (ImageView) convertView;
+			}
+			imageView.setImageResource(imageIDs[position]);
+			return imageView;
+		}
 	}
 
 }
