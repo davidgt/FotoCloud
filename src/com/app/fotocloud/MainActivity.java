@@ -17,6 +17,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.facebook.Request;
@@ -24,6 +25,7 @@ import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphUser;
 import com.facebook.widget.LoginButton;
 
 @SuppressLint("NewApi")
@@ -56,12 +58,11 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_main);	
 		
 		loginButton = (LoginButton) findViewById(R.id.login_button);		
-		
 		Session session = Session.getActiveSession();
-		session.closeAndClearTokenInformation();
+		session.close();
 		
 		readPermissions=new ArrayList<String>();
 		readPermissions.add("user_photos");
@@ -139,9 +140,24 @@ public class MainActivity extends SherlockFragmentActivity {
 	        return true;
 	    }
 	    if (item.equals(clearUser)){
-	    	Session session = Session.getActiveSession();
-	    	if(session.isOpened())
-	    		session.closeAndClearTokenInformation();
+	    	final Session session = Session.getActiveSession();
+	    	new Thread(){
+	            public void run() {
+	                session.closeAndClearTokenInformation();
+	            };
+	            }.start();
+		    if (session != null && session.isOpened()) {
+		        Request.executeMeRequestAsync(session, new Request.GraphUserCallback() {
+					
+					@Override
+					public void onCompleted(GraphUser user, Response response) {
+						if(user!=null){							
+							session.closeAndClearTokenInformation();
+						}
+						
+					}
+				});
+		    }
 	    	return true;
 	    }
 	    if(item.equals(uploadPhoto)){
@@ -265,7 +281,7 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	public void onDestroy() {
 	    super.onDestroy();
-	    uiHelper.onDestroy();
+	    uiHelper.onDestroy();	    
 	}
 
 	@Override
@@ -273,10 +289,6 @@ public class MainActivity extends SherlockFragmentActivity {
 	    super.onSaveInstanceState(outState);
 	    uiHelper.onSaveInstanceState(outState);
 	}
-	public void onClick_Push_ME(View v){
-		//Toast.makeText(getApplicationContext(),, Toast.LENGTH_LONG).show();
-	}
-
 	
 	/*@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {

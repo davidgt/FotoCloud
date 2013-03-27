@@ -1,35 +1,33 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    tools:context=".PhotoGridViewerFragment" >
+   
+    >  
+    	
+    
+	 <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:id="@+id/gridview"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:numColumns="auto_fit"
+	    android:verticalSpacing="10dp"
+	    android:horizontalSpacing="5dp"
+	    android:columnWidth="90dp"
+	    android:stretchMode="columnWidth"
+	    android:gravity="center"
+	    />
+	 
+	 
 
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"        
-        android:text="PHOTO VIEWER" />
-
-    <ImageView
-        android:id="@+id/imageView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        
-      	/>
-
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Picture"
-      	/>
-    <Button
-        android:id="@+id/button2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Json Request"
-      	/>
-        
+	 <ImageView
+	    android:id="@+id/imageView"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	 	/>
+	
+	 
 </LinearLayout>
