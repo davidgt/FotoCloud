@@ -55,6 +55,8 @@ public class MainActivity extends SherlockFragmentActivity {
 	private LoginButton loginButton;
 	private List<String> readPermissions;
 	
+	public int aux;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
