@@ -14,12 +14,11 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.view.View;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.app.objects.FacebookData;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
@@ -55,6 +54,8 @@ public class MainActivity extends SherlockFragmentActivity {
 	private LoginButton loginButton;
 	private List<String> readPermissions;
 	
+	private FacebookData facebookData;
+	
 	public int aux;
 	
 	@Override
@@ -62,9 +63,13 @@ public class MainActivity extends SherlockFragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);	
 		
-		loginButton = (LoginButton) findViewById(R.id.login_button);		
 		Session session = Session.getActiveSession();
 		session.close();
+		
+		loginButton = (LoginButton) findViewById(R.id.login_button);		
+		
+		
+		facebookData=new FacebookData();
 		
 		readPermissions=new ArrayList<String>();
 		readPermissions.add("user_photos");

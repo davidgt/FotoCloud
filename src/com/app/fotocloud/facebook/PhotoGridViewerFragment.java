@@ -44,19 +44,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	
 	private static final String TAG = "PHOTO_GRID_VIEWER";
 	
-	Integer[] imageIDs = {
-	        R.drawable.img1,
-	        R.drawable.img2,
-	        R.drawable.img3,
-	        R.drawable.img4,
-	        R.drawable.img5,
-	        R.drawable.img6,
-	        R.drawable.img7,
-	        R.drawable.img8,
-	        R.drawable.img9,
-	        R.drawable.img10,
-	};
-	private ImageView imageView;
+	private GridView gridView;
 	//---------OLD STUFF-----------------------//
 	//private ImageView imageView;
 	List<String> albumsUrlList=new ArrayList<String>();
@@ -75,8 +63,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 		super.onCreate(savedInstanceState);
 		getActivity().setContentView(R.layout.fb_photo_grid_viewer);
 				
-		GridView gridView = (GridView)getActivity().findViewById(R.id.gridview);
-		gridView.setAdapter(new ImageAdapter(getActivity()));		
+			
 		
 		
 		facebookData=new FacebookData();
@@ -95,6 +82,10 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	        makeMeRequest(session);
 	        fillAlbums(session);
 	    }
+	    if(facebookData.getAlbums().size()>0){
+		    gridView = (GridView)getActivity().findViewById(R.id.gridView);
+			gridView.setAdapter(new ImageAdapter(getActivity()));
+		}
 	    
 	}
 	
@@ -107,7 +98,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	        // Get the user's data
 	        makeMeRequest(session);
 	        fillAlbums(session);
-	        imageView.setImageBitmap(facebookData.getAlbums().get(2).getCover_photo().getPhoto());
+	               
 	    }
 	    
 	}
@@ -122,7 +113,6 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 	    View view = inflater.inflate(R.layout.fb_photo_grid_viewer, container, false);	
 	    //((Button)view.findViewById(R.id.button)).setOnClickListener(this);
-	    imageView = (ImageView) getActivity().findViewById(R.id.imageView);
 	    return view;
 	}
 	
@@ -205,7 +195,6 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		imageView.setImageBitmap(mIcon1);
 		
 	}
 	private void fillAlbums(final Session session) {					
@@ -304,7 +293,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 			context=c;
 		}
 		public int getCount(){
-			return imageIDs.length;
+			return 3;
 		}
 		public Object getItem(int position){
 			return position;
@@ -326,7 +315,8 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 			else{
 				imageView = (ImageView) convertView;
 			}
-			imageView.setImageResource(imageIDs[position]);
+			//imageView.setImageResource(imageIDs[position]);
+			imageView.setImageBitmap(facebookData.getAlbums().get(position).getCover_photo().getPhoto());
 			return imageView;
 		}
 	}
