@@ -1,6 +1,8 @@
 package com.app.fotocloud.facebook;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -14,33 +16,32 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragment;
 import com.app.debug.Debug;
 import com.app.fotocloud.R;
-import com.app.objects.Album;
-import com.app.objects.FacebookData;
 import com.app.objects.Photo;
-import com.app.objects.User;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
-import com.facebook.model.GraphUser;
 
-public class PhotoGridViewerFragment extends SherlockFragment implements OnClickListener {
+public class PhotoGridViewerFragment extends SherlockFragment implements AdapterView.OnItemClickListener {
 	
 	private static final String TAG = "PHOTO_GRID_VIEWER";
 	
@@ -53,20 +54,20 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	//private List<Album> albums; 
 	
 	//------NEW WAY--------------//
-	private FacebookData facebookData;
+	private List<Photo> photoList;
 	
 	private UiLifecycleHelper uiHelper;
 	private Session.StatusCallback callback;
+	
+	private String albumId;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getActivity().setContentView(R.layout.fb_photo_grid_viewer);
-				
-			
 		
-		
-		facebookData=new FacebookData();
+		albumId=getArguments().getString("albumId");
+		photoList = new ArrayList<Photo>();
 		uiHelper = new UiLifecycleHelper(getActivity(), callback);
 	    uiHelper.onCreate(savedInstanceState);
 		
@@ -76,31 +77,44 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 		        onSessionStateChange(session, state, exception);
 		    }
 		}; 
-		Session session = Session.getActiveSession();
-	    if (session != null && session.isOpened()) {
-	        // Get the user's data
-	        makeMeRequest(session);
-	        fillAlbums(session);
-	    }
-	    if(facebookData.getAlbums().size()>0){
-		    gridView = (GridView)getActivity().findViewById(R.id.gridView);
-			gridView.setAdapter(new ImageAdapter(getActivity()));
-		}
-	    
+		
 	}
+	@Override
+	public void onStart() {
+		super.onStart();
+		
+		Session session = Session.getActiveSession();
+		if(albumId!="null" && albumId!=null){
+		    if (session != null && session.isOpened()) {
+		        // Get the user's data
+		        fillPhotos(session);
+		    }
+		    if(photoList.size()>0){
+			    gridView = (GridView)getActivity().findViewById(R.id.gridView);
+				gridView.setAdapter(new ImageAdapter(getSherlockActivity()));
+				gridView.setOnItemClickListener(this);
+			}
+	    }
+	}
+
 	
 	@Override
 	public void onResume() {
 	    super.onResume();
 	    uiHelper.onResume();
 	    Session session = Session.getActiveSession();
-	    if (session != null && session.isOpened()) {
-	        // Get the user's data
-	        makeMeRequest(session);
-	        fillAlbums(session);
-	               
+	    if(albumId!="null" && albumId!=null){
+		    if (session != null && session.isOpened()) {
+		        // Get the user's data
+		        fillPhotos(session);
+		    }
+		    if(photoList.size()>0){
+			    gridView = (GridView)getActivity().findViewById(R.id.gridView);
+				gridView.setAdapter(new ImageAdapter(getActivity()));
+			}
 	    }
 	    
+	    Toast.makeText(getSherlockActivity().getApplicationContext(), "OnResume", Toast.LENGTH_LONG).show();
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -113,6 +127,7 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 	    View view = inflater.inflate(R.layout.fb_photo_grid_viewer, container, false);	
 	    //((Button)view.findViewById(R.id.button)).setOnClickListener(this);
+	    
 	    return view;
 	}
 	
@@ -127,11 +142,11 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	private void onSessionStateChange(final Session session, SessionState state, Exception exception) {
 	    if (session != null && session.isOpened()) {
 	        // Get the user's data.
-	        makeMeRequest(session);
+	        fillPhotos(session);
 	    }
 	    Toast.makeText(getSherlockActivity().getApplicationContext(), "OnSesion", Toast.LENGTH_LONG).show();
 	}
-	private void makeMeRequest(final Session session) {
+	/*private void makeMeRequest(final Session session) {
 	    // Make an API call to get user data and define a 
 	    // new callback to handle the response.
 	    Request request = Request.newMeRequest(session, new Request.GraphUserCallback() {
@@ -153,52 +168,11 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	        }
 	    });
 	    request.executeAndWait();
-	}
-	private void getPictures(String[] pictures){
-		Session session = Session.getActiveSession();
-		
-	
-			for(int i=0;i<pictures.length;i++){
-				Request request = Request.newGraphPathRequest(session, pictures[i], new Request.Callback() {
-				
-					@Override
-					public void onCompleted(Response response) {
-						JSONObject graphResposte=response.getGraphObject().getInnerJSONObject();
-						try {
-							albumsUrlList.add(graphResposte.getString("picture"));
-							Toast.makeText(getSherlockActivity().getApplicationContext(), graphResposte.getString("picture"), Toast.LENGTH_SHORT).show();
-						} catch (JSONException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						
-					}
-				});
-				request.executeAndWait();
-				
-		}
-	}
-	private void paintPicture() {
-		URL img_value = null;
-		try {
-			//img_value = new URL("http://graph.facebook.com/"+userId+"/picture");
-			img_value = new URL(albumsUrlList.get(0));
-			
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		Bitmap mIcon1 = null;
-		try {
-			mIcon1 = BitmapFactory.decodeStream(img_value.openConnection().getInputStream());
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
-	private void fillAlbums(final Session session) {					
-			Request request = Request.newGraphPathRequest(session, ""+facebookData.getUser().getUid()+"/albums", new Request.Callback() {
+	}*/
+	private void fillPhotos(final Session session) {	
+		photoList.clear();
+		photoList.removeAll(photoList);
+			Request request = Request.newGraphPathRequest(session, ""+albumId+"/photos", new Request.Callback() {				
 				JSONObject graphResposte=null;
 				JSONArray jsonArray = null;
 				Photo photo=new Photo();
@@ -212,13 +186,15 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 							for(int i = 0; i < jsonArray.length(); i++){				                
 									JSONObject c = jsonArray.getJSONObject(i);
 									
-									String name = c.getString("name");
-									String cover_photo = c.getString("cover_photo");
+									//String name = c.getString("name");
+									String name="no_name";
+									String sphoto = c.getString("picture");
 									//Toast.makeText(getSherlockActivity().getApplicationContext(), cover_photo, Toast.LENGTH_LONG).show();
 									
-									Photo photo = getPhoto(cover_photo);
-									Debug.out(photo.getPhoto().toString());
-									facebookData.addAlbum(new Album(name,new Photo("title",photo.getPhoto())));
+									Bitmap bitmap = getBitmapFromURL(sphoto);
+									Photo photo = new Photo(name,bitmap);
+									//Debug.out(photo.getPhoto().toString());
+									photoList.add(photo);
 				            }
 							
 						} catch (JSONException e1) {
@@ -231,55 +207,66 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 					}
 					else
 						Toast.makeText(getSherlockActivity().getApplicationContext(), "NULL", Toast.LENGTH_LONG).show();
-					for(int i=0;i<facebookData.getAlbums().size();i++){
-						Debug.out(facebookData.getAlbums().get(i).getCover_photo().getPhoto().toString());
-					}
+	
 				}
-				private Photo getPhoto(String cover_photo) {
+				/*private Photo getPhoto(String cover_photo) {
 					Session session = Session.getActiveSession();
 					//Debug.out(cover_photo);
 					Request request = Request.newGraphPathRequest(session, cover_photo, new Request.Callback() {
-							@Override
-							public void onCompleted(Response response) {
-								JSONObject graphResposte=response.getGraphObject().getInnerJSONObject();
-								try {					
-									String title = "Cover";
-									String url=graphResposte.getString("picture");
+						@Override
+						public void onCompleted(Response response) {
+							JSONObject graphResposte=response.getGraphObject().getInnerJSONObject();
+							try {					
+								String title = "photo";
+								String url=graphResposte.getString("picture");
 									
-									Bitmap bitmap=getBitmap(url);
-									photo.setPhoto(bitmap);
-									photo.setTitle(title);
+								Bitmap bitmap=getBitmap(url);
+								photo.setPhoto(bitmap);
+								photo.setTitle(title);
 									
-								} catch (JSONException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								
+							} catch (JSONException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
 							}
-
-							private Bitmap getBitmap(String url) {
-								URL img_value = null;
-								try {
-									img_value = new URL(url);
-									
-								} catch (MalformedURLException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-								Bitmap mIcon1 = null;
-								try {
-									mIcon1 = BitmapFactory.decodeStream(img_value.openConnection().getInputStream());
-								} catch (IOException e) {
-									Toast.makeText(getSherlockActivity().getApplicationContext(), "GET_BITMAP_ERROR", Toast.LENGTH_LONG).show();
-									e.printStackTrace();
-								}
 								
-								return mIcon1;
-							}				
-						});
-						request.executeAndWait();
-						
+						}
+
+						private Bitmap getBitmap(String url) {
+							URL img_value = null;
+							try {
+								img_value = new URL(url);
+									
+							} catch (MalformedURLException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							Bitmap mIcon1 = null;
+							try {
+								mIcon1 = BitmapFactory.decodeStream(img_value.openConnection().getInputStream());
+							} catch (IOException e) {
+								Toast.makeText(getSherlockActivity().getApplicationContext(), "GET_BITMAP_ERROR", Toast.LENGTH_LONG).show();
+								e.printStackTrace();
+							}
+								
+							return mIcon1;
+						}				
+					});
+					request.executeAndWait();					
 					return photo;
+				}*/
+				public Bitmap getBitmapFromURL(String src) {
+				    try {
+				        URL url = new URL(src);
+				        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				        connection.setDoInput(true);
+				        connection.connect();
+				        InputStream input = connection.getInputStream();
+				        Bitmap myBitmap = BitmapFactory.decodeStream(input);
+				        return myBitmap;
+				    } catch (IOException e) {
+				        e.printStackTrace();
+				        return null;
+				    }
 				}
 				
 				
@@ -289,11 +276,13 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 	
 	public class ImageAdapter extends BaseAdapter{
 		private Context context;
+		private GridView.LayoutParams mImageViewLayoutParams;
+		
 		public ImageAdapter(Context c){
 			context=c;
 		}
 		public int getCount(){
-			return 3;
+			return photoList.size();
 		}
 		public Object getItem(int position){
 			return position;
@@ -307,8 +296,11 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ImageView imageView;
 			if(convertView==null){
+				 mImageViewLayoutParams = new GridView.LayoutParams(
+		                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 				imageView = new ImageView(context);
-				imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+				//imageView.setLayoutParams(new GridView.LayoutParams(85,85));
+				imageView.setLayoutParams(mImageViewLayoutParams);
 				imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 				imageView.setPadding(5,5,5,5);
 			}
@@ -316,9 +308,19 @@ public class PhotoGridViewerFragment extends SherlockFragment implements OnClick
 				imageView = (ImageView) convertView;
 			}
 			//imageView.setImageResource(imageIDs[position]);
-			imageView.setImageBitmap(facebookData.getAlbums().get(position).getCover_photo().getPhoto());
+			if(photoList.size()>0){
+				imageView.setImageBitmap(photoList.get(position).getPhoto());
+				Debug.out(photoList.size());
+			}
 			return imageView;
 		}
 	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		// TODO Auto-generated method stub
+		Toast.makeText(getSherlockActivity().getApplicationContext(), "Click!", Toast.LENGTH_SHORT).show();
+	}
+	
 
 }

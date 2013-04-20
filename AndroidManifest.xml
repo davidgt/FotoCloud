@@ -46,10 +46,7 @@
             android:name="com.app.fotocloud.FragmentTest"
             android:label="@string/title_activity_fragment_test" >
         </activity>
-        <activity
-            android:name="com.app.fotocloud.facebook.PhotoGridViewerFragment"
-            android:label="@string/title_activity_photo_grid_viewer_fragment" >
-        </activity>
+        
     </application>
 
 </manifest>

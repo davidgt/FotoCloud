@@ -13,5 +13,6 @@
     <string name="title_activity_fragment_test">FragmentTest</string>
     <string name="title_activity_photo_grid_viewer_fragment">PhotoGridViewerFragment</string>
     <string name="uploadPhoto">Upload Photo</string>
+    <string name="title_activity_album_list_viewer_fragment">AlbumListViewerFragment</string>
 
 </resources>
