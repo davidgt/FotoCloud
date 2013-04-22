@@ -14,5 +14,11 @@
     <string name="title_activity_photo_grid_viewer_fragment">PhotoGridViewerFragment</string>
     <string name="uploadPhoto">Upload Photo</string>
     <string name="title_activity_album_list_viewer_fragment">AlbumListViewerFragment</string>
+    <string name="dialog_download_photo">Download Photo?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="camera"> Use Camera</string>
+    <string name="disk">Select File</string>
+    
 
 </resources>

@@ -11,6 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -22,6 +23,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockListFragment;
 import com.app.debug.Debug;
 import com.app.fotocloud.MainActivity;
@@ -74,8 +76,13 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 		//albumArray=((MainActivity)getSherlockActivity()).getAlbumNames();
 		Session session = Session.getActiveSession();
 	    if (session != null && session.isOpened()) {
-	        // Get the user's data
-	    	fillFacebookData(session);
+	    	if(((MainActivity)getSherlockActivity()).isNetworkAvailable()){
+	    		fillFacebookData(session);
+	    	}
+	    	else
+	    		Toast.makeText(getSherlockActivity().getApplicationContext(), "Internet Connection Unavailable", Toast.LENGTH_LONG).show();
+	    
+	  
 	    	
 	        if(facebookData.getAlbums().size()>0){
 	        	albumArray=new String[facebookData.getAlbums().size()];
@@ -199,7 +206,13 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 	                    //set userid and username
 	                	User userobj = new User(user.getId(),user.getName());
 	                	facebookData.setUser(userobj);
-	                	//Toast.makeText(getApplicationContext(), "NAme: "+facebookData.getUser().getName(), Toast.LENGTH_LONG).show();
+	                	if(userobj.getName()!=null){
+		                	final ActionBar actionBar = getSherlockActivity().getSupportActionBar();
+		            		actionBar.setDisplayHomeAsUpEnabled(true);
+		            		actionBar.setTitle(userobj.getName());
+		            		actionBar.setSubtitle("fotoCloud");
+	                	}
+	                	
 	                }
 	            }
 	            if (response.getError() != null) {
@@ -219,7 +232,7 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 	@Override
 	public void onResume() {
 	    super.onResume();
-	    //uiHelper.onResume();
+	    uiHelper.onResume();
 	}
 	
 	@Override
@@ -235,15 +248,14 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 			setListAdapter(new ArrayAdapter<String>(getSherlockActivity().getApplicationContext(),
 	                					android.R.layout.simple_list_item_1, albumArray));
 		}
-		getView().setBackgroundColor(Color.BLACK);
-		
-		
+		getView().setBackgroundColor(Color.BLACK);	
 	}		
 	
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		((MainActivity)getSherlockActivity()).callGridView(photoIdList.get(position));
-		
+		((MainActivity)getSherlockActivity()).callGridView(photoIdList.get(position));	
 	}
+	
+	
 
 }
