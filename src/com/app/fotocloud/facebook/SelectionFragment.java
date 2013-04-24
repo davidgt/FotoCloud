@@ -3,13 +3,11 @@ package com.app.fotocloud.facebook;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.actionbarsherlock.app.SherlockFragment;
-import com.actionbarsherlock.view.MenuItem;
 import com.app.fotocloud.R;
 import com.facebook.Request;
 import com.facebook.Response;

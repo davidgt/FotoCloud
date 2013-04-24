@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -24,19 +22,16 @@ import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
-import com.app.fotocloud.common.ImageViewPagerFragment;
 import com.app.fotocloud.facebook.AlbumListViewerFragment;
 import com.app.fotocloud.facebook.DownloadPhotoDialog;
-import com.app.fotocloud.facebook.PhotoGridViewerFragment;
+import com.app.fotocloud.facebook.ImageGridFragment;
 import com.app.fotocloud.facebook.SplashFragment;
 import com.app.fotocloud.facebook.UploadPhotoDialog;
-import com.app.objects.Photo;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
@@ -44,7 +39,7 @@ import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
 
 @SuppressLint("NewApi")
-public class MainActivity extends SherlockFragmentActivity implements DownloadPhotoDialog.NoticeDialogListener{
+public class MainActivity extends SherlockFragmentActivity {
 
 	private static final int REQ_CODE_PICK_IMAGE = 100;
 	private static final int CAMERA_REQUEST = 101;
@@ -53,8 +48,7 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	
 	private AlbumListViewerFragment albumfragment;
 	private SplashFragment splashFragment;
-	private PhotoGridViewerFragment photoGridViewerFragment;
-	private ImageViewPagerFragment imageViewPagerFragment;
+	private ImageGridFragment imageGridFragment;
 	
 	private boolean isResumed = false;
 	
@@ -68,12 +62,11 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	
 	public int aux;
 	public String albumid;
-	private List<Bitmap> bitmapPhotoList;
 	private Bitmap photoDownloadBitmap;
 	
 	private FragmentTransaction fragmentTransaction;
 	
-	//0=splash, 1=AlbumsList, 2=PhotoGrid, 3=ImageView
+	//0=splash, 1=AlbumsList, 2=PhotoGrid
 	private int fragmentVisible;
 	
 	@Override
@@ -92,8 +85,6 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 		final ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 		actionBar.setTitle("Fotocloud");
-		
-		bitmapPhotoList = new ArrayList<Bitmap>();	
 	    
 	    callback = new Session.StatusCallback() {
 	        @Override
@@ -168,9 +159,8 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	    	session.closeAndClearTokenInformation();
 		    splashFragment = new SplashFragment();
 			fragmentTransaction = fm.beginTransaction(); 
-			fragmentTransaction.remove(photoGridViewerFragment);
+			fragmentTransaction.remove(imageGridFragment);
 			fragmentTransaction.remove(albumfragment);
-			fragmentTransaction.remove(imageViewPagerFragment);
 			fragmentTransaction.add(R.id.splashFragment, splashFragment);			
 			fragmentTransaction.commit();
 			
@@ -332,20 +322,12 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	    			fragmentVisible=0;
 		    		break;
 			case 2: fragmentTransaction = fm.beginTransaction(); 
-					fragmentTransaction.remove(photoGridViewerFragment);
+					fragmentTransaction.remove(imageGridFragment);
         			albumfragment = new AlbumListViewerFragment();
         			fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
         			fragmentTransaction.commit();
         			fragmentVisible=1;
         			break;
-			case 3: fragmentTransaction = fm.beginTransaction(); 
-					fragmentTransaction.remove(imageViewPagerFragment);
-					fragmentTransaction.remove(photoGridViewerFragment);
-					albumfragment = new AlbumListViewerFragment();
-					fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
-					fragmentTransaction.commit();
-					fragmentVisible=2;
-					break;
 			default: super.onBackPressed();
 			
 		}
@@ -365,20 +347,12 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	    			fragmentVisible=0;
 		    		break;
 			case 2: fragmentTransaction = fm.beginTransaction(); 
-					fragmentTransaction.remove(photoGridViewerFragment);
+					fragmentTransaction.remove(imageGridFragment);
         			albumfragment = new AlbumListViewerFragment();
         			fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
         			fragmentTransaction.commit();
         			fragmentVisible=1;
         			break;
-			case 3: fragmentTransaction = fm.beginTransaction(); 
-					fragmentTransaction.remove(imageViewPagerFragment);
-					fragmentTransaction.remove(photoGridViewerFragment);
-					albumfragment = new AlbumListViewerFragment();
-					fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
-					fragmentTransaction.commit();
-					fragmentVisible=2;
-					break;
 			default: super.onBackPressed();
 			
 		}
@@ -386,7 +360,7 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	}
 	
 	
-	public void callGridView(String albumid){
+	/*public void callGridView(String albumid){
 		fragmentTransaction = fm.beginTransaction(); 
 		Bundle args = new Bundle();
 		args.putString("albumId", albumid);
@@ -394,6 +368,19 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 		photoGridViewerFragment = new PhotoGridViewerFragment();
 		photoGridViewerFragment.setArguments(args);
 		fragmentTransaction.add(R.id.gridViewGroup, photoGridViewerFragment);
+		fragmentTransaction.commit(); 
+		fragmentVisible=2;
+		
+	}*/
+	
+	public void callGridView(String albumid){
+		fragmentTransaction = fm.beginTransaction(); 
+		Bundle args = new Bundle();
+		args.putString("albumId", albumid);
+		    
+		imageGridFragment = new ImageGridFragment();
+		imageGridFragment.setArguments(args);
+		fragmentTransaction.add(R.id.gridViewGroup, imageGridFragment);
 		fragmentTransaction.commit(); 
 		fragmentVisible=2;
 		
@@ -405,59 +392,27 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
 	    return activeNetworkInfo != null;
 	}
-
-
-
-	public void callImageView(List<Photo> photoList, int position) {
-		// TODO Auto-generated method stub7
-		setPhotoBitmapList(photoList);
-		
-		fragmentTransaction = fm.beginTransaction(); 
-		imageViewPagerFragment = new ImageViewPagerFragment();
-		fragmentTransaction.add(R.id.imageViewFragment, imageViewPagerFragment);
-		fragmentTransaction.commit();
-		fragmentVisible=3;
-	}
-
-
-
-	private void setPhotoBitmapList(List<Photo> photoList) {
-		// TODO Auto-generated method stub
-		bitmapPhotoList.clear();
-		for(int i=0;i<photoList.size();i++){
-			bitmapPhotoList.add(photoList.get(i).getPhoto());
-		}
-		
-	}
 	
-	public List<Bitmap> getPhotoBitmapList() {
-		// TODO Auto-generated method stub
-		return bitmapPhotoList;
-	}
-	
-	public void showDownloadPhotoDialog(Bitmap photo){
+	public void showDownloadPhotoDialog(String URL){
 		DialogFragment newFragment = new DownloadPhotoDialog();
 	    newFragment.show(getSupportFragmentManager(), "photoDownload");
-	    photoDownloadBitmap = photo;
+	    photoDownloadBitmap = getBitmapFromURL(URL);
 	}
-
-
-
-	@Override
-	public void onDialogPositiveClick(DialogFragment dialog) {
-		// TODO Auto-generated method stub
-		
+	
+	public Bitmap getBitmapFromURL(String src) {
+	    try {
+	        URL url = new URL(src);
+	        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+	        connection.setDoInput(true);
+	        connection.connect();
+	        InputStream input = connection.getInputStream();
+	        Bitmap myBitmap = BitmapFactory.decodeStream(input);
+	        return myBitmap;
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
 	}
-
-
-
-	@Override
-	public void onDialogNegativeClick(DialogFragment dialog) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
 
 	public void downloadPhoto() {
 		// TODO Auto-generated method stub
@@ -466,7 +421,7 @@ public class MainActivity extends SherlockFragmentActivity implements DownloadPh
 	        File _picDir  = new File(_sdCard, "fotoCloud");
 	        _picDir.mkdirs();
 
-	        File _picFile = new File(_picDir,  "MyImage.jpg");
+	        File _picFile = new File(_picDir,  "MyImage_"+photoDownloadBitmap.toString()+".jpg");
 	        FileOutputStream _fos = new FileOutputStream(_picFile);
 	        photoDownloadBitmap.compress(Bitmap.CompressFormat.JPEG, 100, _fos);
 	        _fos.flush();

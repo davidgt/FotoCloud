@@ -5,13 +5,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -76,14 +76,12 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 		//albumArray=((MainActivity)getSherlockActivity()).getAlbumNames();
 		Session session = Session.getActiveSession();
 	    if (session != null && session.isOpened()) {
-	    	if(((MainActivity)getSherlockActivity()).isNetworkAvailable()){
+	    	if(((MainActivity)getSherlockActivity()).isNetworkAvailable()){	 	    		
 	    		fillFacebookData(session);
 	    	}
 	    	else
 	    		Toast.makeText(getSherlockActivity().getApplicationContext(), "Internet Connection Unavailable", Toast.LENGTH_LONG).show();
 	    
-	  
-	    	
 	        if(facebookData.getAlbums().size()>0){
 	        	albumArray=new String[facebookData.getAlbums().size()];
 	        	for(int i=0;i<facebookData.getAlbums().size();i++){
@@ -104,7 +102,6 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 		Request request = Request.newGraphPathRequest(session, ""+facebookData.getUser().getUid()+"/albums", new Request.Callback() {
 			JSONObject graphResposte=null;
 			JSONArray jsonArray = null;
-			Photo photo=new Photo();
 			@Override
 			public void onCompleted(Response response) {
 				if(response.getGraphObject()!=null){
@@ -117,14 +114,11 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 								
 								String id = c.getString("id");
 								String name = c.getString("name");
-								String cover_photo = c.getString("cover_photo");
-								
-								//Toast.makeText(getSherlockActivity().getApplicationContext(), cover_photo, Toast.LENGTH_LONG).show();
-								
-								Photo photo = getPhoto(cover_photo);
-								Debug.out(photo.getPhoto().toString());
+							
 								photoIdList.add(id);
-								facebookData.addAlbum(new Album(name,new Photo("title",photo.getPhoto())));
+								Album album=new Album();
+								album.setTitle(name);
+								facebookData.addAlbum(album);
 			            }
 						
 					} catch (JSONException e1) {
@@ -132,16 +126,12 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 						Toast.makeText(getSherlockActivity().getApplicationContext(), "JSON_EXCEPTION", Toast.LENGTH_LONG).show();
 						e1.printStackTrace();
 					}
-					//imageView.setImageBitmap(albums.get(0).getCover_photo().getPhoto());
 			    	
 				}
 				else
 					Toast.makeText(getSherlockActivity().getApplicationContext(), "NULL", Toast.LENGTH_LONG).show();
-				for(int i=0;i<facebookData.getAlbums().size();i++){
-					Debug.out(facebookData.getAlbums().get(i).getCover_photo().getPhoto().toString());
-				}
 			}
-			private Photo getPhoto(String cover_photo) {
+			/*private Photo getPhoto(String cover_photo) {
 				Session session = Session.getActiveSession();
 				//Debug.out(cover_photo);
 				Request request = Request.newGraphPathRequest(session, cover_photo, new Request.Callback() {
@@ -186,7 +176,7 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 					request.executeAndWait();
 					
 				return photo;
-			}
+			}*/
 			
 			
 		});
@@ -225,6 +215,7 @@ public class AlbumListViewerFragment extends SherlockListFragment {
 	}
 	
 	
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		return super.onCreateView(inflater, container, savedInstanceState);
 	}

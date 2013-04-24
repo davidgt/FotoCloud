@@ -8,8 +8,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
-
 import com.actionbarsherlock.app.SherlockFragment;
 import com.app.fotocloud.R;
 import com.facebook.widget.LoginButton;
@@ -19,6 +17,7 @@ public class SplashFragment extends SherlockFragment {
 	private LoginButton loginButton;
 	private List<String> readPermissions;
 	
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getActivity().setContentView(R.layout.fb_splash);

@@ -19,6 +19,6 @@
     <string name="no">No</string>
     <string name="camera"> Use Camera</string>
     <string name="disk">Select File</string>
-    
+    <string name="descr_image">Image</string>
 
 </resources>

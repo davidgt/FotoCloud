@@ -1,13 +1,10 @@
 package com.app.fotocloud.facebook;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.widget.Toast;
-
 import com.app.fotocloud.MainActivity;
 import com.app.fotocloud.R;
 
@@ -26,12 +23,14 @@ public class DownloadPhotoDialog extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(R.string.dialog_download_photo)
                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                   public void onClick(DialogInterface dialog, int id) {
+                   @Override
+				public void onClick(DialogInterface dialog, int id) {
                 	   ((MainActivity)getActivity()).downloadPhoto();;
                    }
                })
                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
-                   public void onClick(DialogInterface dialog, int id) {
+                   @Override
+				public void onClick(DialogInterface dialog, int id) {
                        // User cancelled the dialog
                    }
                });
@@ -39,7 +38,7 @@ public class DownloadPhotoDialog extends DialogFragment {
         return builder.create();
     }
     
-    @Override
+   /* @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         // Verify that the host activity implements the callback interface
@@ -51,5 +50,5 @@ public class DownloadPhotoDialog extends DialogFragment {
             throw new ClassCastException(activity.toString()
                     + " must implement NoticeDialogListener");
         }
-    }
+    }*/
 }
