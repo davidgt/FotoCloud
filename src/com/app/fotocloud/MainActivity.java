@@ -1,44 +1,56 @@
 package com.app.fotocloud;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.os.Environment;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.view.View;
 import android.widget.Toast;
 
+import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.MenuItem;
+import com.app.fotocloud.facebook.AlbumListViewerFragment;
+import com.app.fotocloud.facebook.DownloadPhotoDialog;
+import com.app.fotocloud.facebook.ImageGridFragment;
+import com.app.fotocloud.facebook.SplashFragment;
+import com.app.fotocloud.facebook.UploadPhotoDialog;
 import com.facebook.Request;
 import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
-import com.facebook.widget.LoginButton;
 
 @SuppressLint("NewApi")
 public class MainActivity extends SherlockFragmentActivity {
-	
-	private static final int SPLASH = 0;
-	//private static final int SELECTION = 1;
-	private static final int SETTINGS = 1;
-	private static final int PHOTOVIEWER = 2;
-	private static final int FRAGMENT_COUNT = PHOTOVIEWER + 1;
 
 	private static final int REQ_CODE_PICK_IMAGE = 100;
+	private static final int CAMERA_REQUEST = 101;
 	
-	private Fragment[] fragments = new Fragment[FRAGMENT_COUNT];
 	private Intent photoPickerIntent;
+	
+	private AlbumListViewerFragment albumfragment;
+	private SplashFragment splashFragment;
+	private ImageGridFragment imageGridFragment;
+	
+	private ActionBar actionBar;
 	
 	private boolean isResumed = false;
 	
@@ -46,39 +58,34 @@ public class MainActivity extends SherlockFragmentActivity {
 	private Session.StatusCallback callback;
 	private FragmentManager fm;
 	
-	private MenuItem settings;
 	private MenuItem clearUser;
 	private MenuItem uploadPhoto;
 	
-	private LoginButton loginButton;
-	private List<String> readPermissions;
+	public int aux;
+	public String albumid;
+	private Bitmap photoDownloadBitmap;
+	
+	private FragmentTransaction fragmentTransaction;
+	
+	//0=splash, 1=AlbumsList, 2=PhotoGrid
+	private int fragmentVisible;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		
-		loginButton = (LoginButton) findViewById(R.id.login_button);		
-		
-		Session session = Session.getActiveSession();
-		session.closeAndClearTokenInformation();
-		
-		readPermissions=new ArrayList<String>();
-		readPermissions.add("user_photos");
-		readPermissions.add("photo_upload");
-		loginButton.setReadPermissions(readPermissions);
+		setContentView(R.layout.activity_main);	
 		
 		fm = getSupportFragmentManager();
-	    fragments[SPLASH] = (Fragment) fm.findFragmentById(R.id.splashFragment);
-	    //fragments[SELECTION] = fm.findFragmentById(R.id.selectionFragment);
-	    fragments[SETTINGS] = (Fragment) fm.findFragmentById(R.id.userSettingsFragment);
-	    fragments[PHOTOVIEWER]= (Fragment) fm.findFragmentById(R.id.photoGridViewerFragment);
-
-	    FragmentTransaction transaction = fm.beginTransaction();
-	    for(int i = 0; i < fragments.length; i++) {
-	        transaction.hide(fragments[i]);
-	    }
-	    transaction.commit();
+		fragmentTransaction = fm.beginTransaction();
+		splashFragment = new SplashFragment();
+		fragmentTransaction.add(R.id.splashFragment, splashFragment);
+		
+		fragmentTransaction.commit();
+		fragmentVisible=0;
+		
+		actionBar = getSupportActionBar();
+		actionBar.setDisplayHomeAsUpEnabled(true);
+		actionBar.setTitle("Fotocloud");
 	    
 	    callback = new Session.StatusCallback() {
 	        @Override
@@ -108,6 +115,21 @@ public class MainActivity extends SherlockFragmentActivity {
 	    }*/
 		
 	}
+	@Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // TODO Auto-generated method stub
+
+        super.onConfigurationChanged(newConfig);
+
+          if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+
+          } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+
+          }
+
+    }
+
+	
 
 	@Override
 	public boolean onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu) {
@@ -117,61 +139,54 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 	@Override
 	public boolean onPrepareOptionsMenu(com.actionbarsherlock.view.Menu menu) {
-	    // only add the menu when the selection fragment is showing
-	    if (fragments[PHOTOVIEWER].isVisible()) {
-	        if (menu.size() == 0) {
-	            settings = menu.add(R.string.settings);
-	            clearUser = menu.add(R.string.clearuser);
-	            uploadPhoto = menu.add(R.string.uploadPhoto);
-	        }
-	        return true;
-	    } else {
-	        menu.clear();
-	        settings = null;
-	    }
-	    return false;
+		if(isNetworkAvailable()){
+			menu.clear();
+		    clearUser = menu.add(R.string.clearuser);
+		    uploadPhoto = menu.add(R.string.uploadPhoto);
+		    return true;
+		}
+		return false;		
 	}
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    if (item.equals(settings)) {
-	        showFragment(SETTINGS, true);
-	        return true;
-	    }
+	  
 	    if (item.equals(clearUser)){
-	    	Session session = Session.getActiveSession();
-	    	if(session.isOpened())
-	    		session.closeAndClearTokenInformation();
-	    	return true;
+	    	final Session session = Session.getActiveSession();
+	    	if(session.isOpened()&&session!=null){
+		    	session.closeAndClearTokenInformation();
+			    splashFragment = new SplashFragment();
+				fragmentTransaction = fm.beginTransaction(); 
+				fragmentTransaction.remove(imageGridFragment);
+				fragmentTransaction.remove(albumfragment);
+				fragmentTransaction.add(R.id.splashFragment, splashFragment);			
+				fragmentTransaction.commit();
+				
+				fragmentVisible=0;
+	    	return true;  
+	    	}  	
+	    	else return false;
 	    }
 	    if(item.equals(uploadPhoto)){
-	    	photoPickerIntent = new Intent(Intent.ACTION_PICK);
-	    	photoPickerIntent.setType("image/*");
-	    	startActivityForResult(photoPickerIntent, REQ_CODE_PICK_IMAGE); 
+	    	if(fragmentVisible!=0){
+	    	DialogFragment newFragment = new UploadPhotoDialog();
+		    newFragment.show(getSupportFragmentManager(), "photoUpload");
+		}else 
+			Toast.makeText(getApplicationContext(), "LogIn before upload photo", Toast.LENGTH_SHORT ).show();
+	    }
+	    if(item.getItemId()==android.R.id.home){
+	    	onUpPressed();	
 	    }
 	    return false;
 	}
 	
-	private void showFragment(int fragmentIndex, boolean addToBackStack) {
-	    FragmentManager fm = getSupportFragmentManager();
-	    FragmentTransaction transaction = fm.beginTransaction();
-	    for (int i = 0; i < fragments.length; i++) {
-	        if (i == fragmentIndex) {
-	            transaction.show(fragments[i]);
-	        } else {
-	            transaction.hide(fragments[i]);
-	        }
-	    }
-	    if (addToBackStack) {
-	        transaction.addToBackStack(null);
-	    }
-	    transaction.commit();
-	}
+	
 	@Override
 	public void onResume() {
 	    super.onResume();
 	    uiHelper.onResume();
-	    isResumed = true;	    
+	    isResumed = true;
+	   
 	}
 
 	@Override
@@ -194,11 +209,21 @@ public class MainActivity extends SherlockFragmentActivity {
 	        if (state.isOpened()) {
 	            // If the session state is open:
 	            // Show the authenticated fragment
-	            showFragment(PHOTOVIEWER, false);
+	        	     
+	        	fragmentTransaction = fm.beginTransaction(); 
+	        	albumfragment = new AlbumListViewerFragment();
+				fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
+				fragmentTransaction.commit();
+				fragmentVisible=1;
 	        } else if (state.isClosed()) {
-	            // If the session state is closed:
-	            // Show the login fragment
-	            showFragment(SPLASH, false);
+	        	
+			    fragmentTransaction = fm.beginTransaction();
+		
+			    splashFragment = new SplashFragment();
+				fragmentTransaction.add(R.id.splashFragment, splashFragment);
+				fragmentTransaction.commit();
+				fragmentVisible=0;
+				actionBar.setTitle("Fotocloud");
 	        }
 	    }
 	}
@@ -206,17 +231,6 @@ public class MainActivity extends SherlockFragmentActivity {
 	@Override
 	protected void onResumeFragments() {
 	    super.onResumeFragments();
-	    Session session = Session.getActiveSession();
-	    
-	    if (session != null && session.isOpened()) {
-	        // if the session is already open,
-	        // try to show the selection fragment
-	        showFragment(PHOTOVIEWER, false);
-	    } else {
-	        // otherwise present the splash screen
-	        // and ask the user to login.
-	        showFragment(SPLASH, false);
-	    }
 	}
 	
 	@Override
@@ -256,16 +270,43 @@ public class MainActivity extends SherlockFragmentActivity {
 		            request.setParameters(params);
 
 		            // Execute the request		            
-		            Request.executeAndWait(request);
+		            request.executeAsync();
+		            
 		            
 		        }
+		        break;
+		    case CAMERA_REQUEST:
+		    	if(data!=null){
+		    		Bitmap yourPhoto = (Bitmap) data.getExtras().get("data");
+		    		Session session=Session.getActiveSession();
+		    	
+		            Request request = Request.newUploadPhotoRequest(session, yourPhoto, new Request.Callback() {
+		            
+						@Override
+						public void onCompleted(Response response) {
+							// TODO Auto-generated method stub
+							Toast.makeText(getApplicationContext(), "Photo Uploaded", Toast.LENGTH_SHORT ).show();
+						}
+						
+					});
+		            // Get the current parameters for the request
+		            Bundle params = request.getParameters();
+		            // Add the parameters you want, the caption in this case
+		            params.putString("name", "My Caption String");
+		            // Update the request parameters
+		            request.setParameters(params);
+	
+		            // Execute the request		            
+		            request.executeAsync();
+	            }
+		   
 	    }
 	}
 	
 	@Override
 	public void onDestroy() {
 	    super.onDestroy();
-	    uiHelper.onDestroy();
+	    uiHelper.onDestroy();	    
 	}
 
 	@Override
@@ -273,15 +314,132 @@ public class MainActivity extends SherlockFragmentActivity {
 	    super.onSaveInstanceState(outState);
 	    uiHelper.onSaveInstanceState(outState);
 	}
-	public void onClick_Push_ME(View v){
-		//Toast.makeText(getApplicationContext(),, Toast.LENGTH_LONG).show();
+	
+	@Override
+	public void onBackPressed() {
+	    // TODO Auto-generated method stub
+		switch(fragmentVisible){
+			case 0: super.onBackPressed();
+					break;
+			case 1: Session.getActiveSession().close();
+	    			splashFragment = new SplashFragment();
+	    			fragmentTransaction = fm.beginTransaction(); 
+	    			fragmentTransaction.remove(albumfragment);
+	    			fragmentTransaction.add(R.id.splashFragment, splashFragment);			
+	    			fragmentTransaction.commit();			
+	    			fragmentVisible=0;
+	    			actionBar.setTitle("Fotocloud");
+		    		break;
+			case 2: fragmentTransaction = fm.beginTransaction(); 
+					fragmentTransaction.remove(imageGridFragment);
+        			albumfragment = new AlbumListViewerFragment();
+        			fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
+        			fragmentTransaction.commit();
+        			fragmentVisible=1;
+        			break;
+			default: super.onBackPressed();
+			
+		}
+		
+	}
+	public void onUpPressed() {
+	    // TODO Auto-generated method stub
+		switch(fragmentVisible){
+			case 0: 
+					break;
+			case 1: Session.getActiveSession().close();
+	    			splashFragment = new SplashFragment();
+	    			fragmentTransaction = fm.beginTransaction(); 
+	    			fragmentTransaction.remove(albumfragment);
+	    			fragmentTransaction.add(R.id.splashFragment, splashFragment);			
+	    			fragmentTransaction.commit();			
+	    			fragmentVisible=0;
+	    			actionBar.setTitle("Fotocloud");
+		    		break;
+			case 2: fragmentTransaction = fm.beginTransaction(); 
+					fragmentTransaction.remove(imageGridFragment);
+        			albumfragment = new AlbumListViewerFragment();
+        			fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
+        			fragmentTransaction.commit();
+        			fragmentVisible=1;
+        			break;
+			default: super.onBackPressed();
+			
+		}
+		
+	}
+	
+	public void callGridView(String albumid){
+		fragmentTransaction = fm.beginTransaction(); 
+		Bundle args = new Bundle();
+		args.putString("albumId", albumid);
+		    
+		imageGridFragment = new ImageGridFragment();
+		imageGridFragment.setArguments(args);
+		fragmentTransaction.add(R.id.gridViewGroup, imageGridFragment);
+		fragmentTransaction.commit(); 
+		fragmentVisible=2;
+		
+	}
+	
+	public boolean isNetworkAvailable() {
+	    ConnectivityManager connectivityManager 
+	         = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+	    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+	    return activeNetworkInfo != null;
+	}
+	
+	public void showDownloadPhotoDialog(String URL){
+		DialogFragment newFragment = new DownloadPhotoDialog();
+	    newFragment.show(getSupportFragmentManager(), "photoDownload");
+	    photoDownloadBitmap = getBitmapFromURL(URL);
+	}
+	
+	public Bitmap getBitmapFromURL(String src) {
+	    try {
+	        URL url = new URL(src);
+	        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+	        connection.setDoInput(true);
+	        connection.connect();
+	        InputStream input = connection.getInputStream();
+	        Bitmap myBitmap = BitmapFactory.decodeStream(input);
+	        return myBitmap;
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
 	}
 
-	
-	/*@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-	  super.onActivityResult(requestCode, resultCode, data);
-	  Session.getActiveSession().onActivityResult(this, requestCode, resultCode, data);
-	}*/
+	public void downloadPhoto() {
+		// TODO Auto-generated method stub
+		try{
+	        File _sdCard = Environment.getExternalStorageDirectory();
+	        File _picDir  = new File(_sdCard, "fotoCloud");
+	        _picDir.mkdirs();
+
+	        File _picFile = new File(_picDir,  "MyImage_"+photoDownloadBitmap.toString()+".jpg");
+	        FileOutputStream _fos = new FileOutputStream(_picFile);
+	        photoDownloadBitmap.compress(Bitmap.CompressFormat.JPEG, 100, _fos);
+	        _fos.flush();
+	        _fos.close();
+	        Toast.makeText(getApplicationContext(), "Photo Downloaded", Toast.LENGTH_SHORT ).show();
+	    }catch (Exception ex){
+	        ex.printStackTrace();
+	       
+	    }
+	}
+
+	public void uploadUsingDisk() {
+		photoPickerIntent = new Intent(Intent.ACTION_PICK);
+    	photoPickerIntent.setType("image/*");
+    	startActivityForResult(photoPickerIntent, REQ_CODE_PICK_IMAGE); 
+		
+	}
+
+	public void uploadUsingCamera() {
+		 Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+         // request code
+         startActivityForResult(cameraIntent, CAMERA_REQUEST);		
+	}
 
 }
