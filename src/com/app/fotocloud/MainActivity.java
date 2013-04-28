@@ -44,13 +44,13 @@ public class MainActivity extends SherlockFragmentActivity {
 	private static final int REQ_CODE_PICK_IMAGE = 100;
 	private static final int CAMERA_REQUEST = 101;
 	
-	private Intent photoPickerIntent;
+	private Intent mPhotoPickerIntent;
 	
-	private AlbumListViewerFragment albumfragment;
-	private SplashFragment splashFragment;
-	private ImageGridFragment imageGridFragment;
+	private AlbumListViewerFragment mAlbumfragment;
+	private SplashFragment mSplashFragment;
+	private ImageGridFragment mImageGridFragment;
 	
-	private ActionBar actionBar;
+	private ActionBar mActionBar;
 	
 	private boolean isResumed = false;
 	
@@ -61,7 +61,6 @@ public class MainActivity extends SherlockFragmentActivity {
 	private MenuItem clearUser;
 	private MenuItem uploadPhoto;
 	
-	public int aux;
 	public String albumid;
 	private Bitmap photoDownloadBitmap;
 	
@@ -77,15 +76,15 @@ public class MainActivity extends SherlockFragmentActivity {
 		
 		fm = getSupportFragmentManager();
 		fragmentTransaction = fm.beginTransaction();
-		splashFragment = new SplashFragment();
-		fragmentTransaction.add(R.id.splashFragment, splashFragment);
+		mSplashFragment = new SplashFragment();
+		fragmentTransaction.add(R.id.splashFragment, mSplashFragment);
 		
 		fragmentTransaction.commit();
 		fragmentVisible=0;
 		
-		actionBar = getSupportActionBar();
-		actionBar.setDisplayHomeAsUpEnabled(true);
-		actionBar.setTitle("Fotocloud");
+		mActionBar = getSupportActionBar();
+		mActionBar.setDisplayHomeAsUpEnabled(true);
+		mActionBar.setTitle("Fotocloud");
 	    
 	    callback = new Session.StatusCallback() {
 	        @Override
@@ -155,11 +154,11 @@ public class MainActivity extends SherlockFragmentActivity {
 	    	final Session session = Session.getActiveSession();
 	    	if(session.isOpened()&&session!=null){
 		    	session.closeAndClearTokenInformation();
-			    splashFragment = new SplashFragment();
+		    	mSplashFragment = new SplashFragment();
 				fragmentTransaction = fm.beginTransaction(); 
-				fragmentTransaction.remove(imageGridFragment);
-				fragmentTransaction.remove(albumfragment);
-				fragmentTransaction.add(R.id.splashFragment, splashFragment);			
+				fragmentTransaction.remove(mImageGridFragment);
+				fragmentTransaction.remove(mAlbumfragment);
+				fragmentTransaction.add(R.id.splashFragment, mSplashFragment);			
 				fragmentTransaction.commit();
 				
 				fragmentVisible=0;
@@ -211,19 +210,19 @@ public class MainActivity extends SherlockFragmentActivity {
 	            // Show the authenticated fragment
 	        	     
 	        	fragmentTransaction = fm.beginTransaction(); 
-	        	albumfragment = new AlbumListViewerFragment();
-				fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
+	        	mAlbumfragment = new AlbumListViewerFragment();
+				fragmentTransaction.add(R.id.albumListViewerFragment, mAlbumfragment);
 				fragmentTransaction.commit();
 				fragmentVisible=1;
 	        } else if (state.isClosed()) {
 	        	
 			    fragmentTransaction = fm.beginTransaction();
 		
-			    splashFragment = new SplashFragment();
-				fragmentTransaction.add(R.id.splashFragment, splashFragment);
+			    mSplashFragment = new SplashFragment();
+				fragmentTransaction.add(R.id.splashFragment, mSplashFragment);
 				fragmentTransaction.commit();
 				fragmentVisible=0;
-				actionBar.setTitle("Fotocloud");
+				mActionBar.setTitle("Fotocloud");
 	        }
 	    }
 	}
@@ -322,18 +321,18 @@ public class MainActivity extends SherlockFragmentActivity {
 			case 0: super.onBackPressed();
 					break;
 			case 1: Session.getActiveSession().close();
-	    			splashFragment = new SplashFragment();
+					mSplashFragment = new SplashFragment();
 	    			fragmentTransaction = fm.beginTransaction(); 
-	    			fragmentTransaction.remove(albumfragment);
-	    			fragmentTransaction.add(R.id.splashFragment, splashFragment);			
+	    			fragmentTransaction.remove(mAlbumfragment);
+	    			fragmentTransaction.add(R.id.splashFragment, mSplashFragment);			
 	    			fragmentTransaction.commit();			
 	    			fragmentVisible=0;
-	    			actionBar.setTitle("Fotocloud");
+	    			mActionBar.setTitle("Fotocloud");
 		    		break;
 			case 2: fragmentTransaction = fm.beginTransaction(); 
-					fragmentTransaction.remove(imageGridFragment);
-        			albumfragment = new AlbumListViewerFragment();
-        			fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
+					fragmentTransaction.remove(mImageGridFragment);
+					mAlbumfragment = new AlbumListViewerFragment();
+        			fragmentTransaction.add(R.id.albumListViewerFragment, mAlbumfragment);
         			fragmentTransaction.commit();
         			fragmentVisible=1;
         			break;
@@ -348,18 +347,18 @@ public class MainActivity extends SherlockFragmentActivity {
 			case 0: 
 					break;
 			case 1: Session.getActiveSession().close();
-	    			splashFragment = new SplashFragment();
+					mSplashFragment = new SplashFragment();
 	    			fragmentTransaction = fm.beginTransaction(); 
-	    			fragmentTransaction.remove(albumfragment);
-	    			fragmentTransaction.add(R.id.splashFragment, splashFragment);			
+	    			fragmentTransaction.remove(mAlbumfragment);
+	    			fragmentTransaction.add(R.id.splashFragment, mSplashFragment);			
 	    			fragmentTransaction.commit();			
 	    			fragmentVisible=0;
-	    			actionBar.setTitle("Fotocloud");
+	    			mActionBar.setTitle("Fotocloud");
 		    		break;
 			case 2: fragmentTransaction = fm.beginTransaction(); 
-					fragmentTransaction.remove(imageGridFragment);
-        			albumfragment = new AlbumListViewerFragment();
-        			fragmentTransaction.add(R.id.albumListViewerFragment, albumfragment);
+					fragmentTransaction.remove(mImageGridFragment);
+					mAlbumfragment = new AlbumListViewerFragment();
+        			fragmentTransaction.add(R.id.albumListViewerFragment, mAlbumfragment);
         			fragmentTransaction.commit();
         			fragmentVisible=1;
         			break;
@@ -374,9 +373,9 @@ public class MainActivity extends SherlockFragmentActivity {
 		Bundle args = new Bundle();
 		args.putString("albumId", albumid);
 		    
-		imageGridFragment = new ImageGridFragment();
-		imageGridFragment.setArguments(args);
-		fragmentTransaction.add(R.id.gridViewGroup, imageGridFragment);
+		mImageGridFragment = new ImageGridFragment();
+		mImageGridFragment.setArguments(args);
+		fragmentTransaction.add(R.id.gridViewGroup, mImageGridFragment);
 		fragmentTransaction.commit(); 
 		fragmentVisible=2;
 		
@@ -430,9 +429,9 @@ public class MainActivity extends SherlockFragmentActivity {
 	}
 
 	public void uploadUsingDisk() {
-		photoPickerIntent = new Intent(Intent.ACTION_PICK);
-    	photoPickerIntent.setType("image/*");
-    	startActivityForResult(photoPickerIntent, REQ_CODE_PICK_IMAGE); 
+		mPhotoPickerIntent = new Intent(Intent.ACTION_PICK);
+		mPhotoPickerIntent.setType("image/*");
+    	startActivityForResult(mPhotoPickerIntent, REQ_CODE_PICK_IMAGE); 
 		
 	}
 

@@ -1318,10 +1318,10 @@ containing a value of this type.
         /**  Description of a share target (both in the list of such or the default share button) in a ShareActionProvider (share UI). [CHAR LIMIT=NONE] 
          */
         public static final int abs__shareactionprovider_share_with_application=0x7f090009;
-        public static final int app_id=0x7f09002b;
+        public static final int app_id=0x7f09002a;
         public static final int app_name=0x7f090028;
-        public static final int camera=0x7f090038;
-        public static final int clearuser=0x7f090030;
+        public static final int camera=0x7f090036;
+        public static final int clearuser=0x7f09002f;
         public static final int com_facebook_choose_friends=0x7f09001e;
         public static final int com_facebook_dialogloginactivity_ok_button=0x7f09000f;
         public static final int com_facebook_internet_permission_error_message=0x7f090022;
@@ -1347,21 +1347,19 @@ containing a value of this type.
         public static final int com_facebook_usersettingsfragment_log_in_button=0x7f090017;
         public static final int com_facebook_usersettingsfragment_logged_in=0x7f090018;
         public static final int com_facebook_usersettingsfragment_not_logged_in=0x7f090019;
-        public static final int descr_image=0x7f09003a;
-        public static final int dialog_download_photo=0x7f090035;
-        public static final int disk=0x7f090039;
-        public static final int get_started=0x7f09002d;
-        public static final int hello_world=0x7f090029;
-        public static final int menu_settings=0x7f09002a;
-        public static final int no=0x7f090037;
-        public static final int settings=0x7f09002f;
-        public static final int title_activity_album_list_viewer_fragment=0x7f090034;
-        public static final int title_activity_fragment_test=0x7f090031;
-        public static final int title_activity_photo_grid_viewer_fragment=0x7f090032;
-        public static final int title_activity_selection_fragment=0x7f09002e;
-        public static final int title_activity_splash_fragment=0x7f09002c;
-        public static final int uploadPhoto=0x7f090033;
-        public static final int yes=0x7f090036;
+        public static final int descr_image=0x7f090038;
+        public static final int dialog_download_photo=0x7f090033;
+        public static final int disk=0x7f090037;
+        public static final int get_started=0x7f09002c;
+        public static final int menu_settings=0x7f090029;
+        public static final int no=0x7f090035;
+        public static final int settings=0x7f09002e;
+        public static final int title_activity_album_list_viewer_fragment=0x7f090032;
+        public static final int title_activity_photo_grid_viewer_fragment=0x7f090030;
+        public static final int title_activity_selection_fragment=0x7f09002d;
+        public static final int title_activity_splash_fragment=0x7f09002b;
+        public static final int uploadPhoto=0x7f090031;
+        public static final int yes=0x7f090034;
     }
     public static final class style {
         /** 
