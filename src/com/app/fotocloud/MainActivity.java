@@ -7,10 +7,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.Signature;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -22,6 +29,10 @@ import android.os.Environment;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Base64;
+import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.ActionBar;
@@ -69,10 +80,28 @@ public class MainActivity extends SherlockFragmentActivity {
 	//0=splash, 1=AlbumsList, 2=PhotoGrid
 	private int fragmentVisible;
 	
+	private ProgressDialog mProgress;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);	
+		
+		// Add code to print out the key hash
+	    try {
+	        PackageInfo info = getPackageManager().getPackageInfo(
+	                "com.app.fotocloud", 
+	                PackageManager.GET_SIGNATURES);
+	        for (Signature signature : info.signatures) {
+	            MessageDigest md = MessageDigest.getInstance("SHA");
+	            md.update(signature.toByteArray());
+	            Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+	            }
+	    } catch (NameNotFoundException e) {
+
+	    } catch (NoSuchAlgorithmException e) {
+
+	    }
 		
 		fm = getSupportFragmentManager();
 		fragmentTransaction = fm.beginTransaction();
@@ -96,22 +125,11 @@ public class MainActivity extends SherlockFragmentActivity {
 	    
 	    uiHelper = new UiLifecycleHelper(this, callback);
 	    uiHelper.onCreate(savedInstanceState);
-	    
-		// Add code to print out the key hash
-	    /*try {
-	        PackageInfo info = getPackageManager().getPackageInfo(
-	                "com.facebook.samples.hellofacebook", 
-	                PackageManager.GET_SIGNATURES);
-	        for (Signature signature : info.signatures) {
-	            MessageDigest md = MessageDigest.getInstance("SHA");
-	            md.update(signature.toByteArray());
-	            Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
-	            }
-	    } catch (NameNotFoundException e) {
-
-	    } catch (NoSuchAlgorithmException e) {
-
-	    }*/
+		
+	    mProgress = new ProgressDialog(this);
+	    mProgress.setMessage("Uploading Photo... ");
+	    mProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+	    mProgress.setIndeterminate(true);
 		
 	}
 	@Override
@@ -252,11 +270,13 @@ public class MainActivity extends SherlockFragmentActivity {
 		            Bitmap yourSelectedImage = BitmapFactory.decodeStream(imageStream);		            
 		            
 		            Session session=Session.getActiveSession();
+		            mProgress.show();
 		            Request request = Request.newUploadPhotoRequest(session, yourSelectedImage, new Request.Callback() {
 		            
 						@Override
 						public void onCompleted(Response response) {
 							// TODO Auto-generated method stub
+							mProgress.hide();
 							Toast.makeText(getApplicationContext(), "Photo Uploaded", Toast.LENGTH_SHORT ).show();
 						}
 						
@@ -278,13 +298,14 @@ public class MainActivity extends SherlockFragmentActivity {
 		    	if(data!=null){
 		    		Bitmap yourPhoto = (Bitmap) data.getExtras().get("data");
 		    		Session session=Session.getActiveSession();
-		    	
-		            Request request = Request.newUploadPhotoRequest(session, yourPhoto, new Request.Callback() {
-		            
+		    		
+		            Request request = Request.newUploadPhotoRequest(session, yourPhoto, new Request.Callback() {		            	
 						@Override
 						public void onCompleted(Response response) {
 							// TODO Auto-generated method stub
+							mProgress.hide();
 							Toast.makeText(getApplicationContext(), "Photo Uploaded", Toast.LENGTH_SHORT ).show();
+							
 						}
 						
 					});
@@ -295,6 +316,8 @@ public class MainActivity extends SherlockFragmentActivity {
 		            // Update the request parameters
 		            request.setParameters(params);
 	
+		            Toast.makeText(getApplicationContext(), "Uploading Photo...", Toast.LENGTH_SHORT ).show();
+		            mProgress.show();	
 		            // Execute the request		            
 		            request.executeAsync();
 	            }
